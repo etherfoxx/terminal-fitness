@@ -44,8 +44,8 @@ export function routeCommand(
     // -----------------------------
     // GLOBAL / TERMINAL
     // -----------------------------
-    case 'help':
-      return showHelp();
+    case '--help':
+      return showHelp(ctx);
 
     case 'clear':
       ctx.clear();
@@ -158,17 +158,26 @@ function handleEatCommand(args: string, ctx: CommandContext): string {
 // ----------------------
 // Help output
 // ----------------------
-function showHelp(): string[] {
-  return [
-    'Available commands:',
-    '',
-    'Workout:',
-    '  workout start',
-    '  workout status',
-    '  workout end',
-    '',
-    'Nutrition:',
-    '  eat <food | calories | protein>',
-    '',
-  ];
+function showHelp(ctx: CommandContext): string[] {
+  return ctx.workoutStart
+    ? [
+        'Workout in progress. Available commands:',
+        '',
+        '  add <exercise> -w <weight> -s <sets> -r <reps>',
+        '  workout status',
+        '  workout end',
+      ]
+    : [
+        'Available commands:',
+        '',
+        'Workout:',
+        '  workout start',
+        '  workout status',
+        '  workout end',
+        '',
+        'Nutrition:',
+        '  eat <food | calories | protein>',
+        '',
+        '  --help',
+      ];
 }

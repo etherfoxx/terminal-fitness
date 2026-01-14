@@ -10,7 +10,7 @@ type UseTerminalEngineOptions = {
 
 export function useTerminalEngine(options?: UseTerminalEngineOptions) {
   const {
-    initialLines = ['Homelab Fitness Terminal', "Type 'help' to begin."],
+    initialLines = ['Homelab Terminal Fitness', "Type '--help' to begin."],
     onCommand,
     cursorGutterPx = 24,
   } = options ?? {};
