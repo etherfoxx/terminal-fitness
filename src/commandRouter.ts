@@ -3,6 +3,7 @@
 // Routes normalized terminal commands to domain-specific handlers.
 // This file contains PRODUCT LOGIC, not UI or terminal mechanics.
 
+import { calculateWorkoutSummary } from './domain/workoutSummary';
 import type { CommandContext } from './types/command';
 import { WorkoutFlags } from './types/flags/workoutFlags';
 import { Helpers } from './utils/helpers';
@@ -84,10 +85,28 @@ function handleWorkoutStatus(ctx: CommandContext): string {
   return 'Workout in progress.';
 }
 
-function handleWorkoutEnd(ctx: CommandContext): string {
-  if (!ctx.workoutStart) return 'No active workout.';
-  const duration = ctx.endWorkout();
-  return `Workout complete. Duration: ${duration}ms`;
+function handleWorkoutEnd(ctx: CommandContext): string[] {
+  if (!ctx.workoutStart) {
+    return ['No active workout.'];
+  }
+
+  const { durationMs, sets } = ctx.endWorkout();
+
+  const summary = calculateWorkoutSummary(sets, durationMs);
+
+  return [
+    'Workout complete.',
+    `Duration: ${Helpers.formatDuration(summary.durationMs)}`,
+    `Total sets: ${summary.totalSets}`,
+    `Total reps: ${summary.totalReps}`,
+    `Total volume: ${summary.totalVolume}`,
+    '',
+    'By exercise:',
+    ...summary.exercises.map(
+      (e) =>
+        `- ${e.exercise}: ${e.sets} sets, ${e.reps} reps, ${e.volume} volume`
+    ),
+  ];
 }
 
 function handleWorkoutAdd(args: string, ctx: CommandContext): string {

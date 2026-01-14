@@ -33,9 +33,16 @@ export default function App() {
         });
       },
       endWorkout: () => {
-        const duration = Date.now() - workoutStartRef.current!;
+        const durationMs = Date.now() - workoutStartRef.current!;
+        const sets = workoutSetsRef.current;
+
         workoutStartRef.current = null;
-        return duration;
+        workoutSetsRef.current = [];
+
+        return {
+          durationMs,
+          sets,
+        };
       },
       clear: terminal.clear,
     });
