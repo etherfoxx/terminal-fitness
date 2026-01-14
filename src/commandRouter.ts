@@ -3,50 +3,9 @@
 // Routes normalized terminal commands to domain-specific handlers.
 // This file contains PRODUCT LOGIC, not UI or terminal mechanics.
 
-import { formatDuration } from './utils/helpers';
-
-export type CommandContext = {
-  // Workout state
-  workoutStart: number | null;
-
-  // Mutators
-  startWorkout: () => void;
-  addSet: (set: {
-    exercise: string;
-    weight: number;
-    sets: number;
-    reps: number;
-  }) => void;
-  endWorkout: () => number; // returns duration in ms
-  // Terminal helpers
-  clear: () => void;
-};
-
-// Normalize input so humans can be sloppy
-function normalize(cmd: string): string {
-  return cmd.toLowerCase().trim().replace(/[-_]/g, ' ').replace(/\s+/g, ' ');
-}
-
-function parseFlags(tokens: string[]) {
-  const result: Record<string, string> = {};
-
-  for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i];
-
-    if (token.startsWith('-')) {
-      const value = tokens[i + 1];
-
-      if (!value || value.startsWith('-')) {
-        throw new Error(`Missing value for ${token}`);
-      }
-
-      result[token] = value;
-      i++; // skip value
-    }
-  }
-
-  return result;
-}
+import type { CommandContext } from './types/command';
+import { WorkoutFlags } from './types/flags/workoutFlags';
+import { Helpers } from './utils/helpers';
 
 // ----------------------
 // Public router function
@@ -130,43 +89,36 @@ function handleWorkoutEnd(ctx: CommandContext): string {
   const duration = ctx.endWorkout();
   return `Workout complete. Duration: ${duration}ms`;
 }
-function handleWorkoutAdd(args: string, ctx: CommandContext): string {
-  if (!ctx.workoutStart) {
-    return 'Start a workout before adding exercises.';
-  }
 
-  const tokens = args.split(' ');
+function handleWorkoutAdd(args: string, ctx: CommandContext): string {
+  // args shape:
+  // "<exercise> -w <weight> -s <sets> -r <reps>"
+
+  const tokens = args.split(' ').filter(Boolean);
 
   const exercise = tokens[0];
-  if (!exercise) return 'Exercise name is required.';
+  if (!exercise) {
+    return 'Exercise name is required.';
+  }
 
   const flagTokens = tokens.slice(1);
 
-  let flags: Record<string, string>;
+  let flags;
   try {
-    flags = parseFlags(flagTokens);
+    flags = Helpers.parseFlags(flagTokens, WorkoutFlags);
   } catch (err) {
     return (err as Error).message;
   }
 
-  const weight = flags['-w'] ?? flags['--weight'];
-  const sets = flags['-s'] ?? flags['--sets'];
-  const reps = flags['-r'] ?? flags['--reps'];
-
-  if (!weight || !sets || !reps) {
-    return 'Missing required flags. Use: -w <weight> -s <sets> -r <reps>';
-  }
-
   ctx.addSet({
     exercise,
-    weight: Number(weight),
-    sets: Number(sets),
-    reps: Number(reps),
+    weight: flags.weight,
+    sets: flags.sets,
+    reps: flags.reps,
   });
 
-  return `Added ${exercise}: ${sets}x${reps} @ ${weight}lbs`;
+  return `Added ${exercise}: ${flags.sets}x${flags.reps} @ ${flags.weight}`;
 }
-
 // ----------------------
 // Nutrition commands
 // ----------------------

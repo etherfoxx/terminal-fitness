@@ -1,19 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { routeCommand } from './commandRouter';
 import { useTerminalEngine } from './hooks/useTerminalEngine';
-import { formatDuration } from './utils/helpers';
+import type { WorkoutSet } from './types/workout';
+import { Helpers } from './utils/helpers';
 
 export default function App() {
   const workoutStartRef = useRef<number | null>(null);
-  const workoutSetsRef = useRef<
-    {
-      exercise: string;
-      weight: number;
-      sets: number;
-      reps: number;
-      timestamp: number;
-    }[]
-  >([]);
+  const workoutSetsRef = useRef<WorkoutSet[]>([]);
 
   const [, forceTick] = useState(0);
 
@@ -22,7 +15,9 @@ export default function App() {
   });
 
   const workoutStatus = workoutStartRef.current
-    ? `WORKOUT ACTIVE — ${formatDuration(Date.now() - workoutStartRef.current)}`
+    ? `WORKOUT ACTIVE — ${Helpers.formatDuration(
+        Date.now() - workoutStartRef.current
+      )}`
     : null;
 
   function runCommand(cmd: string) {
