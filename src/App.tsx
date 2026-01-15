@@ -95,15 +95,15 @@ export default function App() {
       clear: terminal.clear,
     });
   }
-  useEffect(() => {
-    if (!workoutStartRef.current) return;
+  // useEffect(() => {
+  //   if (!workoutStartRef.current) return;
 
-    const interval = setInterval(() => {
-      forceTick((n) => n + 1);
-    }, 1_000); // once per minute
+  //   const interval = setInterval(() => {
+  //     forceTick((n) => n + 1);
+  //   }, 1_000); // once per minute
 
-    return () => clearInterval(interval);
-  }, [workoutStartRef.current]);
+  //   return () => clearInterval(interval);
+  // }, [workoutStartRef.current]);
 
   return (
     <div ref={terminal.containerRef} style={container} onClick={terminal.focus}>
