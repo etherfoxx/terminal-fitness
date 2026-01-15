@@ -55,7 +55,7 @@ export function routeCommand(
     // FALLBACK
     // -----------------------------
     default:
-      return `Unknown command: ${rawCommand}`;
+      return `Unknown command`;
   }
 }
 

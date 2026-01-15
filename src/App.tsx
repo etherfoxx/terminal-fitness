@@ -3,16 +3,64 @@ import { routeCommand } from './commandRouter';
 import { useTerminalEngine } from './hooks/useTerminalEngine';
 import type { WorkoutSet } from './types/workout';
 import { Helpers } from './utils/helpers';
+function isMobileDevice() {
+  return /iPhone|iPad|Android/i.test(navigator.userAgent);
+}
 
 export default function App() {
   const workoutStartRef = useRef<number | null>(null);
   const workoutSetsRef = useRef<WorkoutSet[]>([]);
+  const isMobile = isMobileDevice();
 
   const [, forceTick] = useState(0);
 
   const terminal = useTerminalEngine({
     onCommand: runCommand,
   });
+  function MobileTerminalInput({
+    prompt,
+    onSubmit,
+  }: {
+    prompt: string;
+    onSubmit: (value: string) => void;
+  }) {
+    const [value, setValue] = useState('');
+    const inputRef = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+      inputRef.current?.focus();
+    }, []);
+
+    return (
+      <div style={mobileInputLine}>
+        <span>{prompt}</span>
+
+        <input
+          ref={inputRef}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault(); //  important on iOS
+
+              const cmd = value;
+              setValue('');
+              onSubmit(cmd);
+
+              // force focus back AFTER render
+              requestAnimationFrame(() => {
+                inputRef.current?.focus();
+              });
+            }
+          }}
+          spellCheck={false}
+          autoCorrect='off'
+          autoCapitalize='off'
+          inputMode='text'
+          style={mobileInput}
+        />
+      </div>
+    );
+  }
 
   const workoutStatus = workoutStartRef.current
     ? `WORKOUT ACTIVE — ${Helpers.formatDuration(
@@ -62,34 +110,50 @@ export default function App() {
       {workoutStatus && <div style={statusLine}>[{workoutStatus}]</div>}
 
       {terminal.lines.map((line, i) => (
-        <div key={i} style={{ whiteSpace: 'pre' }}>
+        <div key={i} style={{ whiteSpace: isMobile ? 'pre-wrap' : 'pre' }}>
           {line}
         </div>
       ))}
 
-      <div style={inputLine}>
-        <span>{workoutStartRef.current ? '(workout) > ' : '> '}</span>
+      {isMobile ? (
+        <MobileTerminalInput
+          prompt={workoutStartRef.current ? '(workout) > ' : '> '}
+          onSubmit={(cmd) => {
+            terminal.print(
+              `${workoutStartRef.current ? '(workout) > ' : '> '}${cmd}`
+            );
 
-        {/* Rendered input (preserve spaces) */}
-        <span ref={terminal.inputTextRef} style={{ whiteSpace: 'pre' }}>
-          {terminal.input}
-        </span>
+            const result = runCommand(cmd);
 
-        {/* Cursor that gets scrolled into view */}
-        <span ref={terminal.cursorRef} style={cursorStyle}>
-          ▊
-        </span>
-
-        {/* Invisible input to capture keystrokes */}
-        <input
-          ref={terminal.hiddenInputRef}
-          value={terminal.input}
-          onChange={terminal.onChange}
-          onKeyDown={terminal.onKeyDown}
-          autoFocus
-          style={hiddenInput}
+            if (typeof result === 'string') {
+              terminal.print(result);
+            } else if (Array.isArray(result)) {
+              result.forEach(terminal.print);
+            }
+          }}
         />
-      </div>
+      ) : (
+        <div style={inputLine}>
+          <span>{workoutStartRef.current ? '(workout) > ' : '> '}</span>
+
+          <span ref={terminal.inputTextRef} style={{ whiteSpace: 'pre' }}>
+            {terminal.input}
+          </span>
+
+          <span ref={terminal.cursorRef} style={cursorStyle}>
+            ▊
+          </span>
+
+          <input
+            ref={terminal.hiddenInputRef}
+            value={terminal.input}
+            onChange={terminal.onChange}
+            onKeyDown={terminal.onKeyDown}
+            autoFocus
+            style={hiddenInput}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -127,4 +191,20 @@ const hiddenInput: React.CSSProperties = {
 const statusLine: React.CSSProperties = {
   opacity: 0.8,
   marginBottom: 8,
+};
+const mobileInputLine: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  paddingTop: 12,
+};
+
+const mobileInput: React.CSSProperties = {
+  flex: 1,
+  background: 'black',
+  color: '#0f0',
+  border: 'none',
+  outline: 'none',
+  fontFamily: 'monospace',
+  fontSize: 16,
 };
