@@ -1,5 +1,6 @@
 import { SESSION_TIMEOUT_MS, SESSION_STORAGE_KEY } from '../data/constants';
 import type { SessionData, SessionEntry } from '../types/session/session';
+import { Helpers } from '../utils/helpers';
 
 export class SessionManager {
   static load(): SessionData | null {
@@ -22,7 +23,7 @@ export class SessionManager {
   static createNew(): SessionData {
     const now = Date.now();
     const session: SessionData = {
-      id: crypto.randomUUID(),
+      id: Helpers.randomUUID(),
       startedAt: now,
       lastActiveAt: now,
       transcript: [],
