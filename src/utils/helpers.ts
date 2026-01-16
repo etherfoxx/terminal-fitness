@@ -53,4 +53,7 @@ export class Helpers {
         ).toString(16)
     );
   }
+  static isString(value: unknown): value is string {
+    return typeof value === 'string' && value.trim().length > 0;
+  }
 }
